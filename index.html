@@ -1,6 +1,7 @@
   <!DOCTYPE html>
 <html lang="">
   <head>
+  <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
@@ -14,6 +15,24 @@
 
 
 <style>
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 20px; /* لتثبيت الزر في الأسفل، استخدم top: 20px إذا كنت تريده في الأعلى */
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+        z-index: 1000;
+    }
+
+    .add-to-home-button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
   .hidden-image {
     position: absolute;
     top: -9999px;
@@ -27,6 +46,8 @@
 </section>
 
   <body>
+  <button class="add-to-home-button" id="addBtn">إضافة إلى الشاشة الرئيسية</button>
+
     <header class="header">
       <a class="logo">ايدك اليمين</a>
       <nav class="navbar">
@@ -86,6 +107,49 @@
     <script src="js/typed.js@2.0.12"></script>
 
     <script src="js/script.js"></script>
+	<script>
+    let deferredPrompt;
+    const addBtn = document.getElementById('addBtn');
+    addBtn.style.display = 'none'; // إخفاء الزر في البداية
+
+    // الاستماع لحدث قبل التثبيت
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        addBtn.style.display = 'block'; // عرض الزر عند توفر خيار التثبيت
+    });
+
+    addBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt(); // عرض نافذة التثبيت
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                console.log('تم إضافة الصفحة إلى الشاشة الرئيسية');
+            } else {
+                console.log('تم رفض إضافة الصفحة إلى الشاشة الرئيسية');
+            }
+            deferredPrompt = null; // مسح المتغير بعد الاستخدام
+        }
+    });
+
+    // التأكد من أن الزر لا يعمل في Safari على iOS (حيث لا يدعم الحدث)
+    if (!window.matchMedia('(display-mode: standalone)').matches) {
+        addBtn.disabled = true;
+    }
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            }, (error) => {
+                console.log('Service Worker registration failed:', error);
+            });
+        });
+    }
+</script>
+
   </body>
   
 </html>
